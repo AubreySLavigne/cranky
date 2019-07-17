@@ -1,47 +1,50 @@
 package main
 
 import (
+	"flag"
 	"log"
-	"runtime"
-	"sync"
+	"os"
+	"runtime/pprof"
 )
 
-var wg sync.WaitGroup
+var sum int
 
-const batchSize = 1000000
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func main() {
 
-	wg = sync.WaitGroup{}
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
-	// need to implement the counter to make see how many ongoing
-	// processes we have
+	for i := 3; i < 12; i++ {
+		num := newNumber(i)
+		for j := 1; j < len(num.digits); j++ {
+			num.slicePos = j
+			findCrankyNumbers(num)
+		}
+	}
 
-	wg.Add(runtime.NumCPU())
-	in := make(chan int64)
-	out := make(chan int64)
+	log.Printf("Total: %d", sum)
+}
 
-	for i := 0; i < runtime.NumCPU(); i++ {
-		go func(in chan int64, out chan int64) {
-			for start := range in {
-				for i := start; i < start+batchSize; i++ {
-					num := proposed(i)
-					if num.isCranky() {
-						log.Print(num)
-						// out <- int64(num)
-					}
-				}
+func findCrankyNumbers(num number) {
+	for i := 0; i < 10; i++ {
+		newNum := num.copy()
+		if newNum.propose(i) {
+			if newNum.hasMore() {
+				findCrankyNumbers(newNum)
+			} else if newNum.check() {
+				product := newNum.productInt()
+				sum += newNum.asInt()
+				log.Printf("%s >> %d (sum: %d)", newNum.summary(), product, sum)
 			}
-
-			wg.Done()
-		}(in, out)
+		}
 	}
-
-	for i := 0; i < 100000000; i++ {
-		in <- int64(i * batchSize)
-	}
-
-	close(in)
-
-	wg.Wait()
 }
