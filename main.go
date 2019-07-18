@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"runtime/pprof"
+	"sync"
 )
 
 var sum int
@@ -23,13 +24,21 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	for i := 3; i < 12; i++ {
-		num := newNumber(i)
-		for j := 1; j < len(num.digits); j++ {
-			num.slicePos = j
-			findCrankyNumbers(num)
-		}
+	wg := sync.WaitGroup{}
+	wg.Add(14 - 3 + 1)
+
+	for i := 3; i <= 14; i++ {
+		go func(digits int) {
+			num := newNumber(digits)
+			for j := 1; j < len(num.digits); j++ {
+				num.slicePos = j
+				findCrankyNumbers(num)
+			}
+			wg.Done()
+		}(i)
 	}
+
+	wg.Wait()
 
 	log.Printf("Total: %d", sum)
 }
