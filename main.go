@@ -24,10 +24,12 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(14 - 3 + 1)
+	maxDigits := 14
 
-	for i := 3; i <= 14; i++ {
+	wg := sync.WaitGroup{}
+	wg.Add(maxDigits - 3 + 1)
+
+	for i := 3; i <= maxDigits; i++ {
 		go func(digits int) {
 			num := newNumber(digits)
 			for j := 1; j < len(num.digits); j++ {

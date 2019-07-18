@@ -106,20 +106,21 @@ func (n *number) fillWithProduct() bool {
 // two digits, we get '04'
 func (n *number) productSoFar() []int {
 
+	digitsToReturn := n.establishedDigits()
+	if digitsToReturn == 0 {
+		return []int{}
+	}
+
 	first := n.firstInt()
 	second := n.secondInt()
 
-	digitsToReturn := n.establishedDigits()
-	var resArray []int
-	if digitsToReturn == 0 {
-		return resArray
-	}
-
 	total := first * second
+
+	resArray := make([]int, digitsToReturn)
 	for i := 0; i < digitsToReturn; i++ {
 		val := total % 10
 		total /= 10
-		resArray = append(resArray, val)
+		resArray[i] = val
 	}
 
 	return resArray
@@ -259,9 +260,12 @@ func (n *number) propose(x int) bool {
 }
 
 func (n *number) copy() number {
-	var newDigits []digit
-	for _, d := range n.digits {
-		newDigits = append(newDigits, d)
+	newDigits := make([]digit, len(n.digits))
+	for i := 0; i < len(n.digits); i++ {
+		newDigits[i] = digit{
+			known: n.digits[i].known,
+			value: n.digits[i].value,
+		}
 	}
 	return number{
 		slicePos: n.slicePos,
